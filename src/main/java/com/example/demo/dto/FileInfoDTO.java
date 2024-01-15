@@ -11,6 +11,10 @@ public class FileInfoDTO {
 
     private String path;
 
+    private String link;
+
+    private String justname;
+
     private String name;
 
     private String type;

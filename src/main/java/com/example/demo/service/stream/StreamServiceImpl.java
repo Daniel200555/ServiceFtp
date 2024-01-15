@@ -6,6 +6,9 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
+import java.util.zip.ZipOutputStream;
+
 @Service
 public non-sealed class StreamServiceImpl implements StreamService {
 
@@ -23,4 +26,15 @@ public non-sealed class StreamServiceImpl implements StreamService {
     public Mono<Resource> getVideo(String title) {
         return Mono.fromSupplier(() -> resourceLoader.getResource(path + title));
     }
+
+    @Override
+    public Mono<Resource> getPicture(String title) {
+        return Mono.fromSupplier(() -> resourceLoader.getResource(path + title));
+    }
+
+    @Override
+    public Mono<Resource> getZip(String path) {
+        return Mono.fromSupplier(() -> resourceLoader.getResource("file:" + path + ".zip"));
+    }
+
 }

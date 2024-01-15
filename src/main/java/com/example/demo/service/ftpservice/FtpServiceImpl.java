@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +42,7 @@ public non-sealed class FtpServiceImpl implements FtpService {
         System.out.printf("connect");
         ftpClient.login(username, password);
         System.out.printf("login");
+        ftpClient.setControlEncoding("UTF-8");
         return ftpClient;
     }
 
@@ -54,8 +55,45 @@ public non-sealed class FtpServiceImpl implements FtpService {
         System.out.println();
     }
 
-    public void deleteDirectory(String path, FTPClient ftpClient) throws IOException {
+    @Override
+    public byte[] downloadFile(String path, FTPClient ftpClient) throws Exception {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         System.out.println();
+        System.out.printf("[downloadFile][%d] Is success to download file : %s -> %b",
+                System.currentTimeMillis(), path, ftpClient.retrieveFile(path, byteArrayOutputStream));
+        System.out.println();
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    public void deleteDirectory(String path, FTPClient ftpClient) throws IOException {
+//        System.out.println();
+//        System.out.printf("[deleteDirectory][%d] Is success to delete directory : %s -> %b",
+//                System.currentTimeMillis(),
+//                path,
+//                ftpClient.removeDirectory(path));
+//        System.out.println();
+        System.out.println();
+        FTPFile[] files=ftpClient.listFiles(path);
+        if(files.length>0) {
+            for (FTPFile ftpFile : files) {
+                if(ftpFile.isDirectory()){
+                    System.out.printf("[deleteDirectory][%d] Is success to delete directory : %s",
+                            System.currentTimeMillis(),
+                            ftpFile.getName());
+                    System.out.println();
+                    deleteDirectory(path + "/" + ftpFile.getName(), ftpClient);
+                }
+                else {
+                    String deleteFilePath = path + "/" + ftpFile.getName();
+                    System.out.printf("[deleteFile][%d] Is success to delete file : %s -> %b",
+                            System.currentTimeMillis(),
+                            deleteFilePath,
+                            ftpClient.deleteFile(deleteFilePath));
+                    System.out.println();
+                }
+
+            }
+        }
         System.out.printf("[deleteDirectory][%d] Is success to delete directory : %s -> %b",
                 System.currentTimeMillis(),
                 path,
@@ -63,25 +101,46 @@ public non-sealed class FtpServiceImpl implements FtpService {
         System.out.println();
     }
 
+
+
     public void deleteFile(String path, FTPClient ftpClient) throws IOException {
         System.out.println();
-        System.out.printf("[deleteDirectory][%d] Is success to delete directory : %s -> %b",
+        System.out.printf("[deleteFile][%d] Is success to delete file : %s -> %b",
                 System.currentTimeMillis(),
                 path,
                 ftpClient.deleteFile(path));
+        System.out.println();
+    }
+
+    public void createFile(String path, FTPClient ftpClient) {
+
     }
 
     @Override
-    public FileInfoDTO getInfo(String path, FTPFile ftpFile) throws IOException {
+    public FileInfoDTO getInfo(String dir, String path, FTPFile ftpFile) throws IOException {
 //        return new FileInfoDTO(path + ftpFile.getName(), ftpFile.getName(), String.valueOf(ftpFile.getType()), ftpFile.isFile(), ftpFile.isDirectory());
+        String temp = ftpFile.getName();
+        String pathTemp = null;
+        String result = new String(temp.getBytes("ISO-8859-1"), "UTF-8");
         var message = new LogMessage("OK");
         FileInfoDTO infoDTO = new FileInfoDTO();
         infoDTO.setName(ftpFile.getName());
-        if (ftpFile.isFile())
+        System.out.println(infoDTO.getName());
+        if (ftpFile.isFile()) {
+            pathTemp = new GetFormat().getPath(path + ftpFile.getName());
+            infoDTO.setPath(pathTemp);
             infoDTO.setType(new GetFormat().getType(ftpFile.getName(), '.'));
-        else
+            infoDTO.setFormat(new GetFormat().formatFile(infoDTO.getType()));
+            infoDTO.setJustname(new GetFormat().getJName(ftpFile.getName()));
+        }
+        else {
+            pathTemp = new GetFormat().getPath(path + ftpFile.getName() + "/");
+            infoDTO.setPath(pathTemp);
             infoDTO.setType(null);
-        infoDTO.setPath(path + ftpFile.getName());
+            infoDTO.setFormat(null);
+            infoDTO.setJustname(null);
+        }
+        infoDTO.setLink(new GetFormat().getWatch(infoDTO.getPath()));
         infoDTO.setIsFile(ftpFile.isFile());
         infoDTO.setIsDirectory(ftpFile.isDirectory());
         System.out.println(message.message());
@@ -89,11 +148,19 @@ public non-sealed class FtpServiceImpl implements FtpService {
     }
 
     @Override
-    public List<FileInfoDTO> frontInfo(String path, FTPClient ftpClient) throws IOException {
+    public void uploadFile(InputStream file, String remotePath, FTPClient ftpClient) throws IOException {
+        System.out.println();
+        System.out.printf("[uploadFile][%d] Is success to upload file : %s -> %b",
+                System.currentTimeMillis(), remotePath, ftpClient.storeFile(remotePath, file));
+        System.out.println();
+    }
+
+    @Override
+    public List<FileInfoDTO> frontInfo(String dir,String path, FTPClient ftpClient) throws IOException {
         List<FileInfoDTO> list = new ArrayList<>();
         FileInfoDTO temp;
-        for (FTPFile ftpFile : ftpClient.listFiles(path)) {
-            temp = getInfo(path, ftpFile);
+        for (FTPFile ftpFile : ftpClient.listFiles(dir)) {
+            temp = getInfo(dir,path, ftpFile);
             list.add(temp);
             System.out.println(new LogMessage("ADD"));
         }
