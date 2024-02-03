@@ -132,10 +132,10 @@ public class FtpController {
         return infoDTOList;
     }
 
-    @PostMapping("/upload")
-    public ResponseEntity uploadFile(@RequestParam("file")MultipartFile uploadFile) throws IOException {
-        InputStream inputStream = new BufferedInputStream(uploadFile.getInputStream());
-        ftpService.uploadFile(inputStream, "", ftpService.loginFTP(getHost(), getPort(), getUser(), getPassword()));
+    @PostMapping("/uploadFile")
+    public ResponseEntity uploadFile(@RequestParam("file")MultipartFile uploadFile, @RequestParam("path")String path) throws IOException {
+        System.out.println(uploadFile.getOriginalFilename());
+        ftpService.uploadFile(uploadFile.getInputStream(), getPathStandard() + path + "/" + uploadFile.getOriginalFilename(), ftpService.loginFTP(getHost(), getPort(), getUser(), getPassword()));
         return new ResponseEntity(HttpStatus.OK);
     }
 

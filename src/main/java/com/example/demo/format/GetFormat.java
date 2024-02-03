@@ -6,7 +6,7 @@ public class GetFormat {
         return switch (name) {
             case "jpg", "jpeg", "png" -> "PICTURE";
             case "mp4", "mov", "avi" -> "VIDEO";
-            case default -> "NULL";
+            default -> "NULL";
         };
     }
 

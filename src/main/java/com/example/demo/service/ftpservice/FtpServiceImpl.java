@@ -5,11 +5,13 @@ import com.example.demo.format.GetFormat;
 import com.example.demo.message.LogMessage;
 import org.apache.commons.net.ProtocolCommandEvent;
 import org.apache.commons.net.ProtocolCommandListener;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ public non-sealed class FtpServiceImpl implements FtpService {
         ftpClient.login(username, password);
         System.out.printf("login");
         ftpClient.setControlEncoding("UTF-8");
+        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
         return ftpClient;
     }
 
@@ -148,10 +151,11 @@ public non-sealed class FtpServiceImpl implements FtpService {
     }
 
     @Override
-    public void uploadFile(InputStream file, String remotePath, FTPClient ftpClient) throws IOException {
+    public void uploadFile(InputStream input, String remotePath, FTPClient ftpClient) throws IOException {
+//        FileInputStream inputStream = new FileInputStream(path);
         System.out.println();
         System.out.printf("[uploadFile][%d] Is success to upload file : %s -> %b",
-                System.currentTimeMillis(), remotePath, ftpClient.storeFile(remotePath, file));
+                System.currentTimeMillis(), remotePath, ftpClient.storeFile(remotePath, input));
         System.out.println();
     }
 

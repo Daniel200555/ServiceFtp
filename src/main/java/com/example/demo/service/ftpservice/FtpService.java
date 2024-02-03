@@ -25,7 +25,7 @@ public sealed interface FtpService permits FtpServiceImpl {
 
     FileInfoDTO getInfo(String dir, String path, FTPFile ftpFile) throws IOException;
 
-    void uploadFile(InputStream file, String remotePath, FTPClient ftpClient) throws IOException;
+    void uploadFile(InputStream input, String remotePath, FTPClient ftpClient) throws IOException;
 
     List<FileInfoDTO> frontInfo(String dir,String path, FTPClient ftpClient) throws IOException;
 
