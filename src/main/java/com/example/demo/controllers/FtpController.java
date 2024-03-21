@@ -79,6 +79,14 @@ public class FtpController {
 //        String result = new String(path.getBytes("UTF-8"), "ISO-8859-1");
         return streamService.getZip("C:\\Users\\serda\\temp\\" + user + "\\" + title);
     }
+////        String result = file + ".zip";
+//        HttpHeaders header = new HttpHeaders();
+//        header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + "Евангилион.zip");
+//        header.add("Cache-Control", "no-cache, no-store, must-revalidate");
+//        header.add("Pragma", "no-cache");
+//        header.add("Expires", "0");
+//        return ResponseEntity.ok().headers(header).contentType(MediaType.parseMediaType("application/octet-stream")).body(streamService.getZip("C:\\Users\\serda\\temp\\" + user + "\\" + file));    }
+
     @GetMapping("/compress")
     public String compress(@RequestParam("path") String path, @RequestParam("user") String user, @RequestParam("name") String name) throws IOException {
         String temp = "/home/danya/ftp/files/" + path;
@@ -124,10 +132,10 @@ public class FtpController {
         return infoDTOList;
     }
 
-    @PostMapping("/uploadFile")
+    @PostMapping("/upload")
     public ResponseEntity uploadFile(@RequestParam("file")MultipartFile uploadFile) throws IOException {
         InputStream inputStream = new BufferedInputStream(uploadFile.getInputStream());
-        ftpService.uploadFile(inputStream, "/home/danya/ftp/files/bla.mp4", ftpService.loginFTP(getHost(), getPort(), getUser(), getPassword()));
+        ftpService.uploadFile(inputStream, "", ftpService.loginFTP(getHost(), getPort(), getUser(), getPassword()));
         return new ResponseEntity(HttpStatus.OK);
     }
 
