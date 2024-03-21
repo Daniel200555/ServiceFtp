@@ -66,12 +66,6 @@ public non-sealed class FtpServiceImpl implements FtpService {
     }
 
     public void deleteDirectory(String path, FTPClient ftpClient) throws IOException {
-//        System.out.println();
-//        System.out.printf("[deleteDirectory][%d] Is success to delete directory : %s -> %b",
-//                System.currentTimeMillis(),
-//                path,
-//                ftpClient.removeDirectory(path));
-//        System.out.println();
         System.out.println();
         FTPFile[] files=ftpClient.listFiles(path);
         if(files.length>0) {
@@ -110,10 +104,6 @@ public non-sealed class FtpServiceImpl implements FtpService {
                 path,
                 ftpClient.deleteFile(path));
         System.out.println();
-    }
-
-    public void createFile(String path, FTPClient ftpClient) {
-
     }
 
     @Override
