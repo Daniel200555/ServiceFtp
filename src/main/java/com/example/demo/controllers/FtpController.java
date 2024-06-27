@@ -1,9 +1,15 @@
 package com.example.demo.controllers;
 
+import com.example.demo.entry.FileData;
 import com.example.demo.dto.FileInfoDTO;
+import com.example.demo.entry.User;
 import com.example.demo.exception.DeleteDirException;
-import com.example.demo.exception.DownloadDirException;
+import com.example.demo.format.GetFormat;
+import com.example.demo.parsing.FileLink;
+import com.example.demo.repository.MongoRep;
 import com.example.demo.service.ftpservice.FtpServiceImpl;
+import com.example.demo.service.mongo.SequenceGeneratorService;
+import com.example.demo.service.mongo.files.FileService;
 import com.example.demo.service.stream.StreamService;
 import com.example.demo.service.utls.SettingService;
 import com.example.demo.service.zip.ZipService;
@@ -12,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -24,8 +29,10 @@ import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.zip.ZipInputStream;
+import java.util.Map;
 
 @RestController
 @CrossOrigin
@@ -48,6 +55,12 @@ public class FtpController {
     @Autowired
     private ZipService zipService;
 
+    @Autowired
+    private MongoRep mongoRep;
+
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     private String host;
     private String port;
     private String user;
@@ -64,6 +77,66 @@ public class FtpController {
         this.user = environment.getProperty("ftp.user");
         this.password = environment.getProperty("ftp.password");
         this.pathStandard = environment.getProperty("ftp.pathStandard");
+    }
+
+    @PostMapping(value = "/test/add/user")
+    public User addUser(@RequestParam String nickname) {
+        List<FileData> files = new ArrayList<>();
+        List<FileData> shared = new ArrayList<>();
+
+        User user = new User();
+        user.setFiles(files);
+        user.setSharedFiles(shared);
+        user.setNickname(nickname);
+        user.setId(sequenceGeneratorService.getNextSequence("database_sequence"));
+        return mongoRep.save(user);
+    }
+
+    @PostMapping("/test/add/file")
+    public User updateUser(@RequestParam("nickname") String nickname, @RequestParam("dir") String dir, @RequestParam MultipartFile[] file) {
+        User usertemp = mongoRep.findByNickname(nickname);
+        List<FileData> files = usertemp.getFiles();
+        for (MultipartFile f: file)
+            files = FileService.action(usertemp.getFiles(), dir).add(f, dir, nickname);
+        usertemp.setFiles(files);
+        return mongoRep.save(usertemp);
+    }
+
+    @PostMapping("/test/add/folder")
+    public User addFolder(@RequestParam("nickname") String nickname, @RequestParam("dir") String dir, @RequestParam("name") String name) {
+        User usertemp = mongoRep.findByNickname(nickname);
+        List<FileData> files = FileService.action(usertemp.getFiles(), dir).add(name, dir, nickname);
+        usertemp.setFiles(files);
+        return mongoRep.save(usertemp);
+    }
+
+    @PostMapping("/test/delete")
+    public User deleteFile(@RequestParam("nickname") String nickname, @RequestParam("dir") String dir) {
+        User user = mongoRep.findByNickname(nickname);
+        List<FileData> files = FileService.action(user.getFiles(), dir).remove();
+        user.setFiles(files);
+        return mongoRep.save(user);
+    }
+
+    @PostMapping("/test/rename")
+    public User renameFile(@RequestParam("nickname") String nickname, @RequestParam("dir") String dir, @RequestParam("name") String name) {
+        User user = mongoRep.findByNickname(nickname);
+        List<FileData> files = FileService.action(user.getFiles(), dir).rename(name);
+        user.setFiles(files);
+        return mongoRep.save(user);
+    }
+
+    @GetMapping("/test/show")
+    public List<FileData> showFiles(@RequestParam("nickname") String nickname, @RequestParam("dir") String dir) {
+        User user = mongoRep.findByNickname(nickname);
+        return FileService.action(user.getFiles(), dir).showFile();
+    }
+
+    @GetMapping("/test/find")
+    public List<FileData> findFiles(@RequestParam("nickname") String nickname, @RequestParam("name") String name, @RequestParam("dir") String dir) {
+        User user = mongoRep.findByNickname(nickname);
+        System.out.println("In method");
+        return FileService.action().findFile(user.getFiles(), name);
     }
 
     @GetMapping(value = "/stream/video", produces = "video/mp4")
@@ -137,6 +210,15 @@ public class FtpController {
         System.out.println(uploadFile.getOriginalFilename());
         ftpService.uploadFile(uploadFile.getInputStream(), getPathStandard() + path + "/" + uploadFile.getOriginalFilename(), ftpService.loginFTP(getHost(), getPort(), getUser(), getPassword()));
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @PostMapping("/uploadFolder")
+    public Map<String, Boolean> uploadFolder(@RequestParam("folder") MultipartFile[] folder) {
+        Map<String, Boolean> data = new HashMap<>();
+        for (int i = 0; i < folder.length; i++) {
+            data.put(folder[i].getOriginalFilename(), true);
+        }
+        return data;
     }
 
     @GetMapping("/delete/compress")

@@ -2,7 +2,7 @@ package com.example.demo.format;
 
 public class GetFormat {
 
-    public String formatFile(String name) {
+    public static String formatFile(String name) {
         return switch (name) {
             case "jpg", "jpeg", "png" -> "PICTURE";
             case "mp4", "mov", "avi" -> "VIDEO";
@@ -10,7 +10,7 @@ public class GetFormat {
         };
     }
 
-    public String getType(String name, char from) {
+    public static String getType(String name, char from) {
         int num = name.length();
         int temp = 0;
         String result = "";
@@ -70,6 +70,28 @@ public class GetFormat {
         for (int i = 0; i < temp; i++)
             result += name.charAt(i);
         return result;
+    }
+
+    public static boolean checkIsFile(String name) {
+        if (getType(name, '.') == null || getType(name, '.').equals(""))
+            return false;
+        else
+            return true;
+    }
+
+    public static String getOnlyName(String fullName) {
+        StringBuilder temp = new StringBuilder();
+        int t = 0;
+        for (int i = fullName.length() - 1; i > 0; i--) {
+            if (fullName.charAt(i) == '.') {
+                t = i;
+                break;
+            }
+        }
+        for (int i = 0; i < t; i++) {
+            temp.append(fullName.charAt(i));
+        }
+        return temp.toString();
     }
 
 }
