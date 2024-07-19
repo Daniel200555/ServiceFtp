@@ -21,9 +21,7 @@ Links to code:
 4. Docker-Compose - [https://github.com/Daniel200555/runner](https://github.com/Daniel200555/runner)
 
 Structure of microservices in my project:
-1. 
-
-	![[LoginAndRegister]]
+1. [LoginAndRegister](https://github.com/Daniel200555/LoginAndRegister/blob/main/README.md)
 2.  ![[FileFtpMicroservice]]
 3. ![[FileMongoMicroservice]]
 ### In the next version:
